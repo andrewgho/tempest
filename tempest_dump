@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# tempest_dump - read and dump WeatherFlow Tempest UDP broadcast packets
+# Andrew Ho (andrew@zeuscat.com)
+#
+# Listen on for UDP packets from port 50222, and dump them to stdout.
+# Tempest API docs: https://weatherflow.github.io/Tempest/api/udp/v143/
+
+require 'socket'
+socket = UDPSocket.new
+socket.bind('', 50222)
+puts socket.recvfrom(65536)[0] while true
