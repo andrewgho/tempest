@@ -78,21 +78,27 @@ def main(argv)
   # Main loop
   status = 0
   begin
-    tempest = Tempest::Client.new
+    tempest = Tempest::Client.new(logger)
     while true
       event = tempest.read_event
+      logger.debug("event = #{event.inspect}")
 
       # TODO: handle other types of events
       # TODO: handle missing data
-      if event['type'] == 'obs_st'
-        last_updated = event['time_epoch_s']
-        temp_f = celsius_to_fahrenheit(event['air_temperature_c'])
-        humidity = event['relative_humidity_pct'].round(1)
-        uv_index = event['uv_index']
-        solar_radiation = event['solar_radiation_wpm2']
-        precipitation_in = mm_to_in(event['precipitation_accumulated_mm'])
-        precipitation_type = PRECIPITATION_TYPE[event['precipitation_type']]
-        battery_volts = event['battery_volts'].round(2)
+      if event['type'] == 'obs_st' && event['air_temperature_c']
+        begin
+          last_updated = event['time_epoch_s']
+          temp_f = celsius_to_fahrenheit(event['air_temperature_c'])
+          humidity = event['relative_humidity_pct'].round(1)
+          uv_index = event['uv_index']
+          solar_radiation = event['solar_radiation_wpm2']
+          precipitation_in = mm_to_in(event['precipitation_accumulated_mm'])
+          precipitation_type = PRECIPITATION_TYPE[event['precipitation_type']]
+          battery_volts = event['battery_volts'].round(2)
+        rescue Exception => e
+          logger.error("uncaught exception: #{e}, event = #{event.inspect}")
+          return
+        end
 
         # Write tab-separated timeseries data
         timestamp = Time.at(last_updated).strftime('%Y-%m-%dT%H:%M:%S')
@@ -144,6 +150,7 @@ def main(argv)
     status = 1
   end
 
+  logger.info("exiting with status #{status.inspect}")
   status
 end
 
@@ -243,7 +250,7 @@ module Tempest
     # Translate a raw event data packet to a hash with more meaningful names
     # and values (for example, obsevation name/value pairs instead of arrays
     # of indexed observation values).
-    def self.from(event)
+    def self.from(logger, event)
       type = event['type']
       metadata = METADATA[type.to_sym]
       retval = {}
@@ -263,6 +270,12 @@ module Tempest
           retval[name] ||= value
         end
       end
+
+      # TODO: remove this debug line after we figure out weird observation bug
+      if retval['type'] == 'obs_st' && !retval['air_temperature_c'] && logger
+        logger.error("obs_st without air_temperature_c: #{event.inspect}, -> #{retval.inspect}")
+      end
+
       retval
     end
   end
@@ -275,18 +288,20 @@ module Tempest
     attr_reader :ipaddr
     attr_reader :port
     attr_reader :socket
+    attr_reader :logger
 
-    def initialize(ipaddr = '', port = DEFAULT_PORT)
+    def initialize(logger, ipaddr = '', port = DEFAULT_PORT)
       @ipaddr = ipaddr
       @port = port
       @socket = UDPSocket.new
       @socket.bind(@ipaddr, @port)
+      @logger = logger
     end
 
     def read_event
       message, sender = @socket.recvfrom(MAXLEN_BYTES)
       event = JSON.parse(message)
-      Tempest::Event.from(event)
+      Tempest::Event.from(@logger, event)
     end
   end
 end
