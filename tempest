@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# tempest - read and interpret events from WeatherFlow Tempest weather station
+# tempest - log and present WeatherFlow Tempest weather station data
 # Andrew Ho (andrew@zeuscat.com)
 #
 # Tempest API docs: https://weatherflow.github.io/Tempest/api/udp/v143/

@@ -2,10 +2,12 @@ tempest - log and present WeatherFlow Tempest weather station data
 ==================================================================
 
 This program runs in the background and listens for UDP broadcast events
-from a WeatherFlow Tempest weather station. It collects and records a subset
-of the data, recording the data in a tab-separated timeseries data file, and
-keeping a JSON file up to date with the most recent state. That JSON file
-can be used in turn to answer REST API requests for upstream systems.
+from a [WeatherFlow](https://weatherflow.com/)
+[Tempest](https://weatherflow.com/tempest-weather-system/) weather station.
+It collects and records a subset of the data, recording the data in a
+tab-separated timeseries data file, and keeping a JSON file up to date
+with the most recent state. That JSON file can be used in turn to answer
+REST API requests for upstream systems.
 
 Usage
 -----
@@ -42,7 +44,7 @@ References
 Author
 ------
 
-Andrew Ho <andrew@zeuscat.com>
+Andrew Ho &lt;andrew@zeuscat.com&gt;
 
 License
 -------
